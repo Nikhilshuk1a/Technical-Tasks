@@ -64,7 +64,7 @@ systemctl is-active --quiet ansible
 - **'systemctl is-active --quiet <service>'** : Checks if a specified service (like sshd, jenkins, or ansible) is currently running. The command returns a success (exit code 0) if the service is active, otherwise it returns a failure (non-zero exit code).
 
 ### 5. Disk Usage
-**Command:**
+**Commands:**
 ```sh
 df -h | awk 'NR==1 {print "  " $0} NR>1 {if ($5+0 > 80) print "WARNING (Used more than 80%):"$0; else print "  "$0}'
 ```
@@ -101,7 +101,7 @@ ss -s | grep 'TCP:' | awk '{print $4}' | sed 's/[^0-9]*//g'
 - **' sed 's/[^0-9]*//g' '**: Removes any non-numeric characters, leaving only the count.
 
 ### 8. Packet Drops
-**Command:**
+**Commands:**
 ```sh
 ifstat -i $(ip link show | grep 'state UP' | awk '{print $2}' | sed 's/://') 1 1 | tail -n +3 | awk '{print "In: " $1 " Dropped, Out: " $2 " Dropped"}'
 ```
@@ -113,7 +113,7 @@ ifstat -i $(ip link show | grep 'state UP' | awk '{print $2}' | sed 's/://') 1 1
 
 ### 9. Network Traffic in MB
 
-**Command:**
+**Commands:**
 ```sh
 ifstat -i $(ip link show | grep 'state UP' | awk '{print $2}' | sed 's/://') 1 1 | tail -n +3 | awk '{print "In: " $1 " KB, Out: " $2 " KB"}' | awk '{print "In: " $1/1024 " MB, Out: " $2/1024 " MB"}'
 ```
