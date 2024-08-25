@@ -200,7 +200,7 @@ nmap localhost | sed -n '4,7p'
 ### Check for Unauthorized Ports
 
 - Command: 
-```
+```sh
 ss -tuln | awk '{print $5}' | cut -d: -f2 | sort -u
 ```
 - Description: Compares open ports against a list of authorized ports to identify any unauthorized ones.
