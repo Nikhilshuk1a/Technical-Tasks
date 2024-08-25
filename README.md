@@ -217,3 +217,98 @@ ss -tuln | awk '{print $5}' | cut -d: -f2 | sort -u
 - Script Not Running: Ensure the script has executable permissions _'(chmod +x)'_.
 - Missing Commands: Install missing packages or commands as required by your system.
 - Permission Denied Errors: Run the script with _'sudo'_ if required for certain checks.
+
+
+## Script to set a password for the grub bootloader to prevent unauthorized changes to boot parameters
+
+```sh
+#!/bin/bash
+
+# This script sets a password for GRUB bootloader
+
+# Configuration
+GRUB_CONFIG="/etc/default/grub"
+GRUB_PASSWORD_FILE="/boot/grub/user.cfg"
+GRUB_PASSWORD_CMD="grub-mkpasswd-pbkdf2"
+
+# Function to generate a GRUB password hash
+generate_grub_password_hash() {
+    echo "Enter a GRUB password:"
+    read -s password
+    echo "Enter the password again for confirmation:"
+    read -s password_confirm
+
+    if [ "$password" != "$password_confirm" ]; then
+        echo "Passwords do not match. Exiting."
+        exit 1
+    fi
+
+    echo "Generating password hash..."
+    echo "$password" | $GRUB_PASSWORD_CMD | grep -oP '(?<=PBKDF2 hash of your password is ).*'
+}
+
+# Function to update GRUB configuration with the new password
+update_grub_config() {
+    local password_hash="$1"
+    echo "Updating GRUB configuration..."
+    
+    # Backup the original GRUB config
+    cp "$GRUB_CONFIG" "$GRUB_CONFIG.bak"
+    
+    # Add or update the GRUB password configuration
+    if grep -q "^GRUB_PASSWORD=" "$GRUB_CONFIG"; then
+        sed -i "s/^GRUB_PASSWORD=.*/GRUB_PASSWORD='$password_hash'/" "$GRUB_CONFIG"
+    else
+        echo "GRUB_PASSWORD='$password_hash'" >> "$GRUB_CONFIG"
+    fi
+    
+    # Update GRUB and regenerate configuration
+    update-grub
+}
+
+# Function to create or update GRUB user configuration
+update_grub_user_config() {
+    local password_hash="$1"
+    
+    echo "Generating GRUB user configuration..."
+    echo "set superusers=\"root\"" > "$GRUB_PASSWORD_FILE"
+    echo "password_pbkdf2 root $password_hash" >> "$GRUB_PASSWORD_FILE"
+}
+
+# Main script execution
+echo "Setting up GRUB password..."
+password_hash=$(generate_grub_password_hash)
+update_grub_config "$password_hash"
+update_grub_user_config "$password_hash"
+
+echo "GRUB password setup complete. Please reboot to apply changes."
+```
+
+
+# Script Breakdown
+
+1. Generate Password Hash:
+- The script prompts for a password and generates a hashed version using 'grub-mkpasswd-pbkdf2' .
+
+2. Update GRUB Configuration:
+- It updates the '/etc/default/grub' file to include the password hash. If a password entry already exists, it updates it; otherwise, it appends a new entry.
+
+3. Update GRUB User Configuration:
+- The script creates or updates '/boot/grub/user.cfg' with the hashed password to ensure GRUB can use it.
+
+4. Final Steps:
+
+- The script updates the GRUB configuration with update-grub and prompts the user to reboot for changes to take effect.
+
+# Usage
+1. Save the script to a file, e.g., set_grub_password.sh.
+
+2. Make it executable:
+```sh
+chmod +x set_grub_password.sh
+```
+3. Run the script as root or with sudo:
+```sh
+sudo ./set_grub_password.sh
+```
+_This script will set a password for GRUB and ensure that unauthorized users cannot modify boot parameters. Make sure to keep the password secure and remember it, as you’ll need it to make changes to GRUB in the future._
